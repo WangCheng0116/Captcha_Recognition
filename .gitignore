@@ -1,3 +1,4 @@
 dataset
 .history
 .venv
+__pycache__

@@ -46,7 +46,8 @@ def run_training():
     lbl_enc = preprocessing.LabelEncoder()
     lbl_enc.fit(train_targets_flat)
 
-    # Save label classes for later use
+    # Save label classes for later 
+    
     np.save("label_classes.npy", lbl_enc.classes_)
 
     # Encode and pad targets
@@ -79,7 +80,7 @@ def run_training():
     )
 
     # Model, optimizer, and scheduler setup
-    model = CNNLSTM(config.IMAGE_WIDTH, config.IMAGE_HEIGHT, num_classes=len(lbl_enc.classes_))
+    model = CNNLSTM(image_width=config.IMAGE_WIDTH, image_height=config.IMAGE_HEIGHT, num_classes=len(lbl_enc.classes_))
     model.to(config.DEVICE)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -89,16 +90,21 @@ def run_training():
 
     # Early stopping and model saving setup
     best_valid_loss = float("inf")
-    patience = 5
+    patience = 15
     wait = 0
     save_path = "best_model.pth"
+
+    train_losses = []  # List to store training losses
+    valid_losses = []  # List to store validation losses
 
     for epoch in range(config.EPOCHS):
         # Training phase
         train_loss = engine.train_fn(model, train_loader, optimizer)
+        train_losses.append(train_loss)
         
         # Validation phase
         valid_preds, valid_loss = engine.eval_fn(model, test_loader)
+        valid_losses.append(valid_loss)
         
         # Decode predictions for display
         valid_original = []
@@ -128,6 +134,8 @@ def run_training():
         # Update learning rate if needed
         scheduler.step(valid_loss)
 
+    np.save('losses.npy', {'train_losses': train_losses, 'valid_losses': valid_losses})
+    print("Losses saved as 'losses.npy'.")
     print("Training complete. Best model saved as 'best_model.pth' and label classes saved as 'label_classes.npy'.")
 
 if __name__ == "__main__":

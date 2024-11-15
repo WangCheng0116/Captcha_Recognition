@@ -13,8 +13,8 @@ lbl_enc = preprocessing.LabelEncoder()
 lbl_enc.classes_ = np.load("label_classes.npy", allow_pickle=True)  # Assuming you saved label classes during training
 
 # Load the model and its weights
-model = CNNLSTM(config.IMAGE_WIDTH, config.IMAGE_HEIGHT, num_classes=len(lbl_enc.classes_))
-model.load_state_dict(torch.load("model_with_noise_preprocessing.pth", weights_only=True))
+model = CNNLSTM(image_width=config.IMAGE_WIDTH, image_height=config.IMAGE_HEIGHT, num_classes=len(lbl_enc.classes_))
+model.load_state_dict(torch.load("best_model.pth", weights_only=True))
 model.to(config.DEVICE)
 model.eval()  # Set to evaluation mode
 
@@ -88,12 +88,12 @@ def decode_predictions(preds, encoder):
 
 def postprocess(pred_text):
     # Remove placeholder characters
-    pred_text = pred_text.replace("-", "")  # Adjust to remove any specific placeholder character
     # Remove consecutive duplicate characters
     result = []
     for i, char in enumerate(pred_text):
-        if i == 0 or char != pred_text[i - 1]:  # Only append if it's not a consecutive duplicate
-            result.append(char)
+        if char != "-":
+            if i == 0 or char != pred_text[i - 1]:  # Only append if it's not a consecutive duplicate
+                result.append(char)
     return ''.join(result)
 
 # Prediction function
@@ -143,11 +143,34 @@ def evaluate(test_dir):
     }
 
 # Example usage
-# image_path = "C:\\Users\\kevin\\Desktop\\src(1)\\data\\test\\zmnaw8vx-0.png"
-# prediction = postprocess(predict(image_path))
+# image_path = "C:\\Users\\kevin\\Desktop\\src(1)\\data\\test\\1fh4thm-0.png"
+# prediction = postprocess(predict(Image.open(image_path)))
 # print("Predicted text:", prediction)
+# print(predict(Image.open(image_path)))
 
 # Evaluate
-results = evaluate(config.TEST_DATA_DIR)
+results = evaluate("C:\\Users\\kevin\\Desktop\\src(1)\\data\\test")
 print(f"CAPTCHA Accuracy: {results['captcha_accuracy']:.2%}")
 print(f"Character Accuracy: {results['character_accuracy']:.2%}")
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# # Load the saved losses
+# losses = np.load('losses.npy', allow_pickle=True).item()
+
+# train_losses = losses['train_losses']
+# valid_losses = losses['valid_losses']
+
+# print("Train Losses:", train_losses)
+# print("Validation Losses:", valid_losses)
+
+# # Plotting the train and validation losses
+# plt.figure(figsize=(10, 5))
+# plt.plot(train_losses, label="Train Loss")
+# plt.plot(valid_losses, label="Validation Loss")
+# plt.xlabel("Epoch")
+# plt.ylabel("Loss")
+# plt.title("Train vs Validation Loss")
+# plt.legend()
+# plt.show()
